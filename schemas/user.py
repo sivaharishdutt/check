@@ -12,3 +12,12 @@ class User(BaseModel):#serializer
 
     class Config:              #Pydantic models can be created from arbitrary class instances to support models that map to ORM objects.
         orm_model=True
+
+class Item(BaseModel):
+    id:int
+    name:str
+    price:int
+    max_discounted_price:int
+
+    class Config:
+        orm_mode=True
