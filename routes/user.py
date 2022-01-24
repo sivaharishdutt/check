@@ -1,9 +1,10 @@
 from pydantic import BaseModel
- 
+
 from fastapi import APIRouter,HTTPException,status      #FastAPI is a modern, fast (high-performance), web framework for building APIs in python.
 from models.user import User as users
 from models.user import Item as items
 from typing import List
+ 
  
 from config.db import SessionLocal
 user=APIRouter()                    #You want to have the path operations related to your users separated from the rest of the code, to keep it organized,You can create the path operations for that module using APIRouter.
@@ -17,8 +18,8 @@ class User(BaseModel):
     email:str
     password:str
     
-   
-    
+
+
     class Config:                   ##Pydantic models can be created from arbitrary class instances to support models that map to ORM objects.
         orm_mode=True 
 
@@ -28,13 +29,19 @@ class Item(BaseModel):
     price:int
     max_discounted_price:int
 
+
+
     class Config:
         orm_mode=True
 
 
+ 
 
 userTable=users
 itemTable=items
+
+
+ 
 
 @user.get('/user/',response_model=List[User],status_code=200)
 def fetch_all_users():
@@ -88,10 +95,10 @@ def create_a_user(user_id:User ):
 
 @user.post('/item/',response_model=Item,status_code=status.HTTP_201_CREATED)
 def create_an_item(itemID:Item ):
-    #db_item=session.query(itemTable).filter(itemTable.name==itemID.name).first()
+    db_item=session.query(itemTable).filter(itemTable.name==itemID.name).first()
 
-    #if db_item is not None:
-    #    raise HTTPException(status_code=400,detail="Item Already Exists")
+    if db_item is not None:
+        raise HTTPException(status_code=400,detail="Item Already Exists")
 
     new_Item=itemTable(
        
@@ -132,9 +139,9 @@ def update_a_item(id:int,item:Item):
     item_to_update.name=item.name
     item_to_update.price=item.price
     item_to_update.max_discounted_price=item.max_discounted_price
- 
-     
-    
+
+
+
 
     session.commit()
 
@@ -166,3 +173,17 @@ def delete_item(id:int):
 
     return item_to_delete
 
+results=session.query(userTable,itemTable).join(userTable).all()
+
+@user.get('/join/')
+def fetch_all_users_data_along_with_items():
+    
+    return results
+
+@user.get('/join/{id}' )
+def fetch_single_user_item_details(id:int):
+    singleUserItem = session.query(userTable, itemTable).join(userTable).filter(userTable.id==id).all()
+    if singleUserItem is None:
+        raise HTTPException(status_code=404,detail="that particular id does not exist")
+     
+    return singleUserItem
