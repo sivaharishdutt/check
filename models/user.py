@@ -13,7 +13,7 @@ meta=MetaData()
 class User(Base):
     __tablename__='users'
     id=Column(Integer,primary_key=True)
-    item_id=Column(Integer,ForeignKey("items.id"))
+    #item_id=Column(Integer,ForeignKey("items.id"))
     name=Column(String(255))
     email=Column(String(255))
     password=Column(String(255))
@@ -25,35 +25,20 @@ class Item(Base):
     price=Column(Integer)
     max_discounted_price=Column(Integer)
 
+class Order(Base):
+    __tablename__='orders'
+    id=Column(Integer,primary_key=True)
+    user_id=Column(Integer,ForeignKey("users.id"))
+
+class OrderItem(Base):
+    __tablename__='order_items'
+    id=Column(Integer,primary_key=True)
+    order_id=Column(Integer,ForeignKey("orders.id"))
+    item_id=Column(Integer,ForeignKey("items.id"))
+
 Base.metadata.create_all(engine)
 
 """
-
-Order:
-ord id:pk
-ordid: 1 
-user id:fk
-user id:
-//items_list:Json
-
-orderItem:
-order id:fk
-item id:fk
-
-
-user=siva
-amazon 3 prods
-i1: 
-i2:
-i3:
-
-
-lolcalhost/users/6/items/89/prices?limit=100&variable=20
-
-@user.get('/users/{ex1}/items/{ex2}/prices/')
-def check(ex1:int,ex2:int,limit:int=100,variable:int=20):
-    pass
-
 
 user:
 id pk,
@@ -70,7 +55,11 @@ max_discounted_price.
 order:
 id pk,
 user-id fk,
-item-id fk.
+
+orderItem:
+id pk
+ord_id:fk
+item_id:fk
 
 relationships:
 user-order m:1 coz one user can make many orders

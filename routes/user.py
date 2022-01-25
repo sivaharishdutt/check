@@ -2,9 +2,11 @@ from pydantic import BaseModel
 from fastapi import APIRouter,HTTPException,status      #FastAPI is a modern, fast (high-performance), web framework for building APIs in python.
 from models.user import User as users
 from models.user import Item as items
+from models.user import Order as orders
+from models.user import OrderItem as orditems
 from typing import List
-from sqlalchemy import join
-from sqlalchemy.sql import select
+#from sqlalchemy import join
+#from sqlalchemy.sql import select
  
 from config.db import SessionLocal
 user=APIRouter()                    #You want to have the path operations related to your users separated from the rest of the code, to keep it organized,You can create the path operations for that module using APIRouter.
@@ -13,7 +15,7 @@ session=SessionLocal()
 
 class User(BaseModel):
     id:int
-    item_id:int
+    #item_id:int
     name:str
     email:str
     password:str
@@ -35,10 +37,25 @@ class Item(BaseModel):
         orm_mode=True
 
 
- 
+class Order(BaseModel):
+    id:int
+    user_id:int
+
+    class Config:
+        orm_mode=True
+
+class OrderItem(BaseModel):
+    id:int
+    order_id:int
+    item_id:int
+
+    class Config:
+        orm_mode=True
 
 userTable=users
 itemTable=items
+orderTable=orders
+orderItemTable=orditems
 
 
  
@@ -48,6 +65,7 @@ def fetch_all_users():
     all_users=session.query(userTable).all()
 
     return all_users
+
 @user.get('/item/',response_model=List[Item],status_code=200)
 def fetch_all_items():
     all_items=session.query(itemTable).all()
@@ -80,7 +98,6 @@ def create_a_user(user_id:User ):
         raise HTTPException(status_code=400,detail="User Already Exists")
 
     new_user=userTable(
-        item_id=user_id.item_id,
         name=user_id.name,
         email=user_id.email,
         password=user_id.password
@@ -102,7 +119,7 @@ def create_an_item(itemID:Item ):
 
     new_Item=itemTable(
        
-        id=itemID.id,
+       
         name=itemID.name,
         price=itemID.price,
         max_discounted_price=itemID.max_discounted_price
@@ -119,7 +136,7 @@ def create_an_item(itemID:Item ):
 @user.put('/user/{id}',response_model=User,status_code=status.HTTP_200_OK)
 def update_a_user(id:int,user:User):
     user_to_update=session.query(userTable).filter(userTable.id==id).first()
-    user_to_update.item_id=user.item_id
+    
     user_to_update.name=user.name
     user_to_update.email=user.email
     user_to_update.password=user.password
@@ -134,8 +151,7 @@ def update_a_user(id:int,user:User):
 
 @user.put('/item/{id}',response_model=Item,status_code=status.HTTP_200_OK)
 def update_a_item(id:int,item:Item):
-    item_to_update=session.query(itemTable).filter(itemTable.id==item.id).first()
-    item_to_update.id=item.id
+    item_to_update=session.query(itemTable).filter(itemTable.id==id).first()
     item_to_update.name=item.name
     item_to_update.price=item.price
     item_to_update.max_discounted_price=item.max_discounted_price
@@ -173,7 +189,53 @@ def delete_item(id:int):
 
     return item_to_delete
 
- 
+@user.post('/id-of-users-who-made-orders/',response_model=Order,status_code=status.HTTP_201_CREATED)
+def add_user_order(ord_id:Order):
+    new_order=orderTable(
+        user_id=ord_id.user_id
+    ) 
+    session.add(new_order)
+    session.commit()
+
+    return new_order 
+
+@user.get('/total-orders-made/',response_model=List[Order],status_code=200)
+def fetch_all_orders():
+    all_orders=session.query(orderTable).all()
+
+    return all_orders
+
+@user.post('/items-that-are-bought-with-a-particular-order/',response_model=OrderItem,status_code=status.HTTP_201_CREATED)
+def add_user_order(orderItem_id:OrderItem):
+    order_items=orderItemTable(
+        order_id=orderItem_id.order_id,
+        item_id=orderItem_id.item_id,
+    ) 
+    session.add(order_items)
+    session.commit()
+
+    return order_items 
+
+@user.get('/items-that-are-bought-wiht-single-order-id/{id}' )
+def items_wrt_a_order(id:int):
+    OrderItems = session.query(orderTable.user_id.label('user id:'),orderItemTable.item_id.label('product id:'),itemTable.name.label('product name:'),itemTable.max_discounted_price.label('product discounted price:')).join(orderItemTable,orderTable.id==orderItemTable.order_id,isouter=True).join(itemTable,orderItemTable.item_id==itemTable.id).filter(orderTable.id==id).all()
+    
+    if OrderItems is None:
+        raise HTTPException(status_code=404,detail="that particular order id does not exist")
+     
+    return OrderItems
+
+@user.get('/name-of-user-along-with-items-bought-wrt-order-id/{id}' )
+def name_of_user_wrt_ordID(id:int):
+    user_names_with_items = session.query(userTable.name.label('user name'),itemTable.name.label('product name'),itemTable.max_discounted_price.label('product price')).join(orderTable,userTable.id==orderTable.user_id,isouter=True).join(orderItemTable,orderTable.id==orderItemTable.order_id,isouter=True).join(itemTable,orderItemTable.item_id==itemTable.id,isouter=True).filter(orderTable.id==id).all()
+    
+    if user_names_with_items is None:
+        raise HTTPException(status_code=404,detail="that particular order id does not exist")
+     
+    return user_names_with_items
+
+
+"""
 @user.get('/giving-details-of-users/')
 def fetch_all_users_data_along_with_items():
     results=session.query(userTable,itemTable).join(userTable).all()
@@ -197,6 +259,7 @@ def fetch_item_details_with_users():
      
     return Item
 
+"""
 
 """"
 

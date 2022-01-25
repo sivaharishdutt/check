@@ -3,22 +3,34 @@ from pydantic import BaseModel  #pydantic-Data validation and settings managemen
 
 class User(BaseModel):#serializer
     
-    user_id:int
-    user_name:str
-    user_email:str
-    item_id:int
-    user_password:str
+    id:int
+    name:str
+    email:str
+    password:str
  
-    
-
     class Config:              #Pydantic models can be created from arbitrary class instances to support models that map to ORM objects.
         orm_model=True
 
 class Item(BaseModel):
-    item_id:int
-    item_name:str
-    item_price:int
-    item_max_discounted_price:int
+    id:int
+    name:str
+    price:int
+    max_discounted_price:int
+
+    class Config:
+        orm_mode=True
+
+class Order(BaseModel):
+    id:int
+    user_id:int
+
+    class Config:
+        orm_mode=True
+
+class OrderItem(BaseModel):
+    id:int
+    order_id:int
+    user_id:int
 
     class Config:
         orm_mode=True
