@@ -3,10 +3,11 @@ from pydantic import BaseModel  #pydantic-Data validation and settings managemen
 
 class User(BaseModel):#serializer
     
-    id:int
-    name:str
-    email:str
-    password:str
+    user_id:int
+    user_name:str
+    user_email:str
+    item_id:int
+    user_password:str
  
     
 
@@ -14,10 +15,10 @@ class User(BaseModel):#serializer
         orm_model=True
 
 class Item(BaseModel):
-    id:int
-    name:str
-    price:int
-    max_discounted_price:int
+    item_id:int
+    item_name:str
+    item_price:int
+    item_max_discounted_price:int
 
     class Config:
         orm_mode=True

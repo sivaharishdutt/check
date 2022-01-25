@@ -1,10 +1,10 @@
 from pydantic import BaseModel
-
 from fastapi import APIRouter,HTTPException,status      #FastAPI is a modern, fast (high-performance), web framework for building APIs in python.
 from models.user import User as users
 from models.user import Item as items
 from typing import List
- 
+from sqlalchemy import join
+from sqlalchemy.sql import select
  
 from config.db import SessionLocal
 user=APIRouter()                    #You want to have the path operations related to your users separated from the rest of the code, to keep it organized,You can create the path operations for that module using APIRouter.
@@ -173,17 +173,47 @@ def delete_item(id:int):
 
     return item_to_delete
 
-results=session.query(userTable,itemTable).join(userTable).all()
-
-@user.get('/join/')
+ 
+@user.get('/giving-details-of-users/')
 def fetch_all_users_data_along_with_items():
-    
+    results=session.query(userTable,itemTable).join(userTable).all()
     return results
 
-@user.get('/join/{id}' )
-def fetch_single_user_item_details(id:int):
-    singleUserItem = session.query(userTable, itemTable).join(userTable).filter(userTable.id==id).all()
+@user.get('/giving-user-details/' )
+def fetch_user_details_with_items():
+    singleUserItem = session.query(userTable,itemTable).join(itemTable,userTable.item_id==itemTable.id,isouter=True).all()
+    print(singleUserItem)
     if singleUserItem is None:
         raise HTTPException(status_code=404,detail="that particular id does not exist")
      
     return singleUserItem
+
+@user.get('/giving-item-details/' )
+def fetch_item_details_with_users():
+    Item = session.query(itemTable,userTable).join(userTable,userTable.item_id==itemTable.id,isouter=True).all()
+    print(Item)
+    if Item is None:
+        raise HTTPException(status_code=404,detail="that particular id does not exist")
+     
+    return Item
+
+
+""""
+
+@user.get('/join/{id}')
+def which_user_bought_what_item(id:int):
+    j=userTable.join(itemTable,userTable.c.item_id==itemTable.c.id)
+    stmt=select([userTable]).select_from(j)
+    answer=session.query(stmt)
+
+    return answer
+
+@user.get('/join/{id}')
+def check_user_names_items_who_bought_ge_100():
+    for c,i in session.query(userTable,itemTable).filter(userTable.item_id==itemTable.id and itemTable.max_discounted_price>=100):
+        print ("ID: {} Name: {} Item Name: {} Amount: {}".format(c.id,c.name, i.name, i.max_discounted_price))
+
+    return {}
+
+
+"""
