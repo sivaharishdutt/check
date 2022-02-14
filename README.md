@@ -9,8 +9,10 @@ follow this commands to run this application
 
 alembic is a migration tool, used it here for schema change
 
-Basic testing is done.
+you need to write the code for setup class and tear down class, such that whatever records are created in testing database 
+will be dropped down when testing is done, so when running testing again so database will be empty and works just fine.
 
+Basic testing is done.
 to run this testing file use this command
 
 pyhton -m unittest tests.test_database
